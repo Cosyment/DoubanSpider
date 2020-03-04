@@ -5,44 +5,24 @@ import lxml.etree
 from time import sleep
 import re
 import json
+import Headers
+import ProxyValidator
 import pymysql
 from selenium import webdriver
-import ProxyAddress
-
-# 浏览器请求头
-headerlist = [
-    'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.62 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; U; PPC Mac OS X 10.5; en-US; rv:1.9.2.15) Gecko/20110303 Firefox/3.6.15',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 6.1; rv:50.0) Gecko/20100101 Firefox/50.0',
-    'Mozilla/5.0 (Windows NT 6.3; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0',
-    'Mozilla/5.0 (X11; Linux x86_64; rv:50.0) Gecko/20100101 Firefox/50.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36',
-    'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0;  Trident/5.0)',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/602.2.14 (KHTML, like Gecko) Version/10.0.1 Safari/602.2.14',
-    'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36',
-    'Mozilla/5.0 (iPad; CPU OS 10_1_1 like Mac OS X) AppleWebKit/602.2.14 (KHTML, like Gecko) Version/10.0 Mobile/14B100 Safari/602.1',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:49.0) Gecko/20100101 Firefox/49.0',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:50.0) Gecko/20100101 Firefox/50.0',
-    'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0']
 
 
 # ---------分 --割 --线 -------------------
 # 数据库类
 # 完成数据插入 查询操作
-class mysql():
+class MySql():
     # 查询函数1
     def select1(self, str):
         # 打开数据库连接
-        db = pymysql.connect("localhost", 'root', 'yf123457.', 'yf')
+        db = pymysql.connect("localhost", 'root', 'root', 'imovie')
         # 获取游标
         cursor = db.cursor()
         # SQL 查询语句
-        sql = "select * from movie2 where name like '%{}%'".format(str)
+        sql = "select * from movie where name like '%{}%'".format(str)
         try:
             cursor.execute(sql)
             result = cursor.fetchall()  # 获取查询内容
@@ -71,11 +51,11 @@ class mysql():
     # 查询函数2
     def select2(self, str):
         # 打开数据库连接
-        db = pymysql.connect("localhost", 'root', 'yf123457.', 'yf')
+        db = pymysql.connect("localhost", 'root', 'root', 'imovie')
         # 获取游标
         cursor = db.cursor()
         # SQL 查询语句
-        sql = "select * from movie2 where type like '%{}%'".format(str)
+        sql = "select * from movie where type like '%{}%'".format(str)
         try:
             cursor.execute(sql)
             result = cursor.fetchall()  # 获取查询内容
@@ -105,7 +85,7 @@ class mysql():
     def insert(self, top, moviename, director, writer, actors, type, date, duration, IMDburl, introduction, tralerurl,
                movieurl):
         # 打开数据库连接
-        db = pymysql.connect("localhost", "root", "yf123457.", "yf")
+        db = pymysql.connect("localhost", "root", "root", "imovie")
         # 使用cursor()方法获取操作游标
         cursor = db.cursor()
         # 电影简介内容出现""双引号 无法直接插入数据表中 需要进行处理
@@ -113,7 +93,7 @@ class mysql():
         temp = re.compile("\"")
         text = temp.sub("\\\"", introduction)
         # SQL 插入语句
-        sql = """INSERT INTO movie VALUES ({}, "{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}")""" \
+        sql = """INSERT INTO movie VALUES ({}, {},{},{},{},{},{},{},{},{},{},{})""" \
             .format(top, moviename, director, writer, actors, type, date, duration, IMDburl, text, tralerurl, movieurl)
         # SQL 查询语句
         sql2 = "select name from movie where name='{}'".format(moviename)
@@ -137,23 +117,35 @@ class mysql():
         db.close()
 
     # 插入函数2
-    def insert2(self, moviename, director, writer, actors, type, date, duration, IMDburl, introduction,
-                tralerurl, movieurl):
+    def insert2(self, name, cover, rating, year, director, writer, actors, type, release_date, duration, introduction,
+                trailer_url):
         # 打开数据库连接
-        db = pymysql.connect("localhost", "root", "yf123457.", "yf")
+        db = pymysql.connect("localhost", "root", "root", "imovie")
         # 使用cursor()方法获取操作游标
         cursor = db.cursor()
         # 电影简介内容出现""双引号 无法直接插入数据表中 需要进行处理
         # 使用正则替换，便可以插入数据表中
-        temp = re.compile("\"")
-        text = temp.sub("\\\"", introduction)
+        # temp = re.compile("\"")
+        # text = temp.sub("\\\"", introduction)  # 转换简介中双引号
+        # text = temp.sub("\\\'", "\\\\'")
+        name = name.replace("\'", "\\'")
+        introduction = introduction.replace("\"", "\\\"").replace("\'", "\\'")
+
+        # name = temp.sub("\\\'", "\\\\'")  # 转换电影名中可能出现的单引号
         # SQL 插入语句
-        sql = """INSERT INTO movie2 VALUES ("{}","{}","{}","{}","{}","{}","{}","{}","{}","{}","{}")""" \
-            .format(moviename, director, writer, actors, type, date, duration, IMDburl, text, tralerurl, movieurl)
-        sql2 = "select name from movie2 where name='{}'".format(moviename)
+        sql = "insert into movie(name, cover,rating,year, director, writer, actors, type, release_date, duration, introduction, trailer) " \
+              "values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(name, cover, rating,
+                                                                                            year,
+                                                                                            director,
+                                                                                            writer,
+                                                                                            actors, type, release_date,
+                                                                                            duration,
+                                                                                            introduction,
+                                                                                            trailer_url)
+        query_sql = "select name from movie where name='{}'".format(name)
         try:
             # 执行sql语句
-            cursor.execute(sql2)
+            cursor.execute(query_sql)
             # 提交到数据库执行
             result = cursor.fetchall()
             if len(result) == 0:
@@ -164,7 +156,8 @@ class mysql():
                 print("数据插入成功")
             else:
                 print("数据表中记录已存在")
-        except:
+        except Exception as ex:
+            print(ex)
             # 如果发生错误则回滚
             db.rollback()
         # 关闭数据库连接
@@ -175,8 +168,8 @@ class mysql():
 # 豆瓣爬虫类
 # 豆瓣网 [url=https://movie.douban.com/]https://movie.douban.com/[/url]
 # 豆瓣TOP250电影榜 [url=https://movie.douban.com/top250?start=0&filter=]https://movie.douban.com/top250?start=0&filter=[/url]
-class spider():
-    iplist = []
+class Spider():
+    ipList = []
     path = ""  # 文件下载路径
     mySqlFlag = True  # 是否将数据插入数据库
     downloadFlag = True  # 是否下载预告片
@@ -187,8 +180,7 @@ class spider():
         self.path = path
         self.downloadFlag = downloadFlag
         self.mySqlFlag = mySqlFlag
-        with open("ip.txt", "r") as file:
-            self.iplist = file.readlines()
+        self.get_proxies_ip()
 
     # 遍历页面
     def foreach(self):
@@ -201,14 +193,18 @@ class spider():
             flag = self.foreachPageUrl(i)
             if flag == 1:
                 i += 1
-            else:
+            elif flag == 0:
                 print("重新访问当前页")
+            else:
+                print("服务器拒绝，爬虫终止")
+                break
 
     # 豆瓣250 获取当前页电影链接
     def foreachPageUrl(self, page):
         url = "https://movie.douban.com/top250?start={}&filter=".format(page * 25)
         header = dict()
-        header["user-agent"] = random.choice(headerlist)
+        header["user-agent"] = Headers.get_header()
+        r = None
         try:
             # 通过requests.get()方法 获取网页信息
             r = requests.get(url, headers=header)
@@ -228,12 +224,18 @@ class spider():
                     i += 1
                     count += 1
                     print("")
-                else:
+                elif flag == 0:
                     print("重新获取电影详细信息")
+                else:
+                    print("服务器拒绝，爬虫终止")
+                    break
             return 1
-        except:
-            print("当前页无法访问！")
-            return 0
+        except Exception as ex:
+            print("爬取异常 {}".format(ex))
+            if r.status_code == 403:
+                return -1
+            else:
+                return 0
 
     # 获取分类下全部影片(网页片)
     def getAllMoviesByHtml(self):
@@ -246,17 +248,17 @@ class spider():
         drive.get('https://movie.douban.com/tag/#/?sort=U&range=0,20&tags=电影')
         try:
             # 通过xpath查找网页标签
-            drive.implicitly_wait(self.randomDelay("准备爬取网页信息"))  # 等待5秒
+            drive.implicitly_wait(self.random_delay("准备爬取网页信息"))  # 等待5秒
             a = drive.find_elements_by_class_name("item")
             i = 0
             while i < 9999999:
                 print("------------------------第{}条数据，已加载{}条数据------------------------".format((i + 1), len(a)))
                 url = a[i].get_attribute("href")
                 print()
-                self.randomDelay("准备获取电影详情 {}")
+                self.random_delay("准备获取电影详情 {}")
                 self.getMovieDetail(0, url, 1)
                 if i == len(a) - 18:
-                    self.randomDelay("准备爬取下一页 {}")
+                    self.random_delay("准备爬取下一页 {}")
                     # 页面滚动到底部，解决查看更多不可见时点击无效问题
                     drive.execute_script("window.scrollTo(0,document.body.scrollHeight)")
                     more = drive.find_element_by_class_name("more")
@@ -274,51 +276,58 @@ class spider():
             return 0
 
     def getAllMoviesByApi(self):
+        print()
+        print("开始爬取豆瓣全部电影")
         url = "https://movie.douban.com/j/new_search_subjects?sort=U&range=0,10&tags=电影&start={}"
         header = dict()
-        startPage = 0  # 豆瓣api开始页
-        header["user-agent"] = random.choice(headerlist)
+        start_page = 0  # 豆瓣api开始页
+        is_reject = False  # 服务器是否拒绝访问
+        header["user-agent"] = Headers.get_header()
         try:
-            r = requests.get(url.format(startPage), headers=header, proxies={'http': self.randomIP()})
-            r.raise_for_status()
-            result = json.loads(r.content.decode('utf-8'))
-            # 判断结果是否包含data 数组
-            if 'data' in result:
-                datas = result['data']
-            else:
-                print("爬取异常中止 result {}".format(result))
-                return 0
-
             count = 1  # 当前已爬取总条数
-            i = 0
-            while True:
-                print()
-                print("------------------------第{}条数据------------------------".format(count))
-                if i > len(datas) or len(datas) == 0:
+            while True:  # 爬取一页数据
+                if is_reject:
+                    break
+                print("----------------------加载第{}页,start_page {}----------------------".format(
+                    int(count / self.pageSize) + 1,
+                    start_page))
+                r = requests.get(url.format(start_page), headers=header, proxies={'http': self.random_proxies_ip()})
+                r.raise_for_status()
+                result = json.loads(r.content.decode('utf-8'))
+                # 判断结果是否包含data 数组
+                if 'data' in result:
+                    datas = result['data']
+                else:
+                    print("爬取异常中止 result {}".format(result))
+                    break
+
+                if len(datas) == 0:
                     print("加载完毕")
                     break
-                data = datas[i]
-                self.randomDelay("准备获取电影详情 {}")
-                self.getMovieDetail(0, data['url'], 1)
-                if (i + 1) == self.pageSize:
+
+                for i in range(len(datas)):  # 爬取每页数据中的详情
                     print()
-                    self.randomDelay("准备爬取下一页 {}")
-                    page = int(count / self.pageSize)
-                    startPage = int(self.pageSize * page)
-                    print("-----------加载第{}页,startPage {}".format(page,
-                                                                  startPage))
-                    r = requests.get(url.format(startPage), headers=header)
-                    r.raise_for_status()
-                    result = json.loads(r.content.decode('utf-8'))
-                    if 'data' in result:
-                        datas = result['data']
-                        i = 0
-                    else:
-                        print("爬取异常中止 result {}".format(result))
-                        return 0
-                else:
-                    i += 1
-                count += 1
+                    print("------------------------第{}条数据------------------------".format(count))
+                    data = datas[i]
+                    self.random_delay("准备获取《" + data['title'] + "》电影详情 {}")
+                    flag = 1
+                    for _ in range(len(self.ipList)):  # 获取电影详情数据，失败重试3次
+                        flag = self.getMovieDetail(0, data['url'], 1)
+                        if flag == 1:  # 详情页抓取成功
+                            break
+                        else:
+                            print()
+                            print("重新抓取详情数据")
+                    if flag == -1:
+                        print("服务器拒绝，爬虫终止")
+                        is_reject = True
+                        break
+                    if (i + 1) == self.pageSize:
+                        print()
+                        self.random_delay("准备爬取下一页 {}")
+                        page = int(count / self.pageSize)
+                        start_page = int(self.pageSize * page)
+                    count += 1
         except Exception as ex:
             print("爬取异常 {}".format(ex))
             return 0
@@ -339,8 +348,8 @@ class spider():
             # 获取电影详细信息
             self.getMovieDetail(0, url, 1)
             drive.implicitly_wait(5)  # 等待5秒
-        except:
-            print("error")
+        except Exception as ex:
+            print(ex)
             # drive.close()  # 关闭页面
 
     # 最新上映电影
@@ -367,8 +376,8 @@ class spider():
                 # 获取电影详细信息
                 self.getMovieDetail(i + 1, l[i], 1)
                 print()
-        except:
-            print("error")
+        except Exception as ex:
+            print(ex)
         # drive.close()#关闭页面
 
     # 最近热门电影
@@ -395,37 +404,41 @@ class spider():
                 self.getMovieDetail(0, l[i], 1)
                 print()
             drive.implicitly_wait(3)  # 等待3秒
-        except:
-            print("error")
-
-    # drive.close()#关闭浏览器
+        except Exception as ex:
+            print(ex)
+            # drive.close()#关闭浏览器
 
     # 获取电影详细信息
     def getMovieDetail(self, top, url, insertFlag):  # 其中flag 用来决定插入哪个数据表 movie或movie2 用来判断使用哪一个数据库插入函数
         print("豆瓣电影链接:{}".format(url))
         header = dict()
         # 获取请求头的user-agent字典，应付反爬处理
-        header["user-agent"] = random.choice(headerlist)  # 通过random.choice随机抽取一个user-agent
+        header["user-agent"] = Headers.get_header()
         director = ''  # 导演
         writer = ''  # 编剧
         actors = ''  # 主演
         type = ''  # 类型
-        date = ''  # 上映时间
+        release_date = ''  # 上映日期
         duration = ''  # 时长
         IMDb = ''  # IMDb链接
         text = ''  # 简介
         video = ''  # 预告片
+        r = None
         try:
             # 通过requests.get获取url链接
-            r = requests.get(url, headers=header, proxies={'http': self.randomIP()})
+            r = requests.get(url, headers=header, proxies={'http': self.random_proxies_ip()})
             r.raise_for_status()  # 网页状态码 200
             xml = lxml.etree.HTML(r.text)  # 将网页源码转为xml 用lxml库进行解析
             # 获取电影名
             n = xml.xpath("//div[@id='content']/h1/span")  # 通过xpath获取网页标签
-            name = n[0].text + n[1].text
+            name = n[0].text
             print("片名:{}".format(name))
-            cover = xml.xpath("//div[@id='mainpic']/a/img/@src")
-            print("海报:{}".format(cover[0]))
+            year = str(n[1].text).replace("(", "").replace(")", "")
+            print("年份:{}".format(year))
+            rating = xml.xpath("//strong[@class='ll rating_num']/text()")[0]
+            print("评分:{}".format(rating))
+            cover = xml.xpath("//div[@id='mainpic']/a/img/@src")[0]
+            print("海报:{}".format(cover))
             div1 = xml.xpath("//div[@id='info']//span[@class='attrs']")
             for i in range(len(div1)):
                 if i == 0:
@@ -456,8 +469,8 @@ class spider():
             # 获取电视上映日期
             x5 = xml.xpath("//span[@property='v:initialReleaseDate']")
             for i in x5:
-                date += i.text + " "
-            print("上映日期:{}".format(date))
+                release_date += i.text + " "
+            print("上映日期:{}".format(release_date))
             # 获取电影片长
             x6 = xml.xpath("//span[@property='v:runtime']")
             for i in x6:
@@ -478,48 +491,60 @@ class spider():
             video = xml.xpath("//a[@title='预告片']/@href")
             if len(video) >= 1:
                 print("预告片链接:{}".format(video[0]))
-                while True:
+                if not self.downloadFlag:
+                    if self.mySqlFlag:
+                        MySql().insert2(name, cover, rating, year, director, writer, actors, type, release_date,
+                                        duration,
+                                        text,
+                                        video[0])
+                    return 1
+                for _ in range(3):  # 预告片下载失败时，重试3次
                     # 前往预告片链接页面，获取预告片的播放地址，实现下载预告片功能
-                    flag = -1
-                    if self.downloadFlag:
-                        self.randomDelay("准备下载预告片地址 {}")
-                        flag = self.getMovieTrailer(name, video[0])
-                    else:
-                        break
+                    self.random_delay("准备下载预告片地址 {}")
+                    flag = self.getMovieTrailer(name, video)
                     if flag == 1:
                         # 下载成功后，数据库插入数据
                         # 根据mysql来决定是否将数据插入数据表中
                         if self.mySqlFlag:
                             if insertFlag == 0:
                                 # 将电影详细信息插入数据库
-                                mysql().insert(top, name, director, writer, actors, type, date, duration, IMDb, text,
-                                               video[0], url)
+                                MySql().insert(top, name, director, year, writer, actors, type, release_date, duration,
+                                               IMDb,
+                                               text,
+                                               video, url)
                             elif insertFlag == 1:
-                                mysql().insert2(name, director, writer, actors, type, date, duration, IMDb, text,
-                                                video[0], url)
+                                MySql().insert2(name, cover, rating, director, writer, actors, type, release_date,
+                                                duration,
+                                                text,
+                                                video)
                         return 1
                     else:
                         print("重新获取电影预告片")
             else:
                 # 有些电影没有预告片，数据库插入数据
-                # 根据myusql来决定是否将数据插入数据表中
+                # 根据mysql来决定是否将数据插入数据表中
                 print("该电影找不到预告片")
                 if self.mySqlFlag:
                     if insertFlag == 0:
                         # 执行插入函数1
-                        mysql().insert(top, name, director, writer, actors, type, date, duration, IMDb, text, "", url)
+                        MySql().insert(top, name, director, writer, actors, type, release_date, duration, IMDb, text,
+                                       "", url)
                     elif insertFlag == 1:
                         # 执行插入函数2
-                        mysql().insert2(name, director, writer, actors, type, date, duration, IMDb, text, "", url)
+                        MySql().insert2(name, director, writer, actors, type, release_date, duration, IMDb, text, "",
+                                        url)
                 return 1
         except Exception as ex:
             print("无法访问电影详细信息 {}".format(ex))
-            return 0
+            if r.status_code == 403:
+                return -1
+            else:
+                return 0
 
     # 获取电影预告片
     def getMovieTrailer(self, name, url):
         header = dict()
-        header['user-agent'] = random.choice(headerlist)
+        header['user-agent'] = Headers.get_header()
         try:
             r = requests.get(url, headers=header)
             xml = lxml.etree.HTML(r.text)
@@ -535,7 +560,7 @@ class spider():
             # 根据downloadflag开关来决定是否下载预告片
             if self.downloadFlag:
                 while True:
-                    self.randomDelay("准备下载预告片 {}")
+                    self.random_delay("准备下载预告片 {}")
                     # 下载预告片
                     flag = self.download(name, result)
                     if flag == 1:
@@ -544,14 +569,14 @@ class spider():
                         print("下载失败，重新下载")
             else:
                 return 1
-        except:
-            print("无法获取电影预告片")
+        except Exception as ex:
+            print("无法获取电影预告片 {}".format(ex))
             return 0
 
     # 下载预告片
     def download(self, name, url):
         header = dict()
-        header['user-agent'] = random.choice(headerlist)
+        header['user-agent'] = Headers.get_header()
         try:
             r = requests.get(url, headers=header, timeout=30)
             # 处理一下文件名 有些电影名中带 /\*:"?<>| ，windows中的文件名是不能有这些字符
@@ -574,40 +599,68 @@ class spider():
             return 0
 
     # 处理爬虫默认2-15s随机延迟
-    def randomDelay(self, str):
-        delay = random.randint(2, 10)
+    def random_delay(self, str):
+        delay = random.randint(2, 15)
         while True:
             if delay == 0:
-                print()
-                print()
+                # 清除倒计时提示
+                print("\r", end="", flush=True)
                 break
             else:
                 delay -= 1
-                # 覆盖打印 清空end 默认"\n"
+                # 开始倒计时提示 覆盖打印 清空end 默认"\n"
                 print("\r" + str.format(delay), end="", flush=True)
                 sleep(1)
 
-    def randomIP(self):
+    # 从ip列表中随机取一个ip
+    def random_proxies_ip(self):
         while True:
-            ip = str(random.choice(self.iplist)).strip()
-            if ip.startswith("http://") and self.checkProxyIP(ip):
+            if len(self.ipList) == 0:
+                break
+            ip = str(random.choice(self.ipList)).strip()
+            # if ip.startswith("http://"):
+            if ip.startswith("https://") and ProxyValidator.validate(ip):
+                # if ip.startswith("https://"):
+                print("有效代理ip {}".format(ip))
                 return ip
 
-    def checkProxyIP(self, url):
-        check_url = "http://www.baidu.com"
-        header = dict()
-        header["user-agent"] = random.choice(headerlist)
-        proxies = {'http': url, 'https': url}
-        try:
-            r = requests.get(check_url, headers=header, proxies=proxies, timeout=3)
-            if r.status_code == 200:
-                return True
+            # 处理已失效ip
             else:
-                return False
-        except Exception as ex:
-            print("无效代理IP地址{}".format(url))
-            print(ex)
-            return False
+                original_ip = ip + "\n"
+                self.ipList.remove(original_ip)  # 删除内存中iplist中的ip
+                if len(self.ipList) <= 5:
+                    self.get_proxies_ip()
+                self.del_proxies_ip(original_ip)  # 删除文件中ip
+
+    # 读取本地文件中的ip
+    def get_proxies_ip(self):
+        with open("ip.txt", "r") as file:
+            self.ipList = file.readlines()
+            file.close()
+
+    # 根据ip删除ip.txt中数据
+    def del_proxies_ip(self, text):
+        with open("ip.txt", "r") as file:
+            lines = file.readlines()
+            file.close()
+        with open('ip.txt', 'w') as file:
+            for line in lines:
+                if text == line:
+                    continue
+                file.write(line)
+            file.close()
+
+    def testProxy(self):
+        url = "http://httpbin.org/ip"
+        header = dict()
+        header["user-agent"] = Headers.get_header()
+        proxies_ip = random.choice(self.ipList)
+        print("random ip {}".format(proxies_ip))
+        proxies = {'http': proxies_ip, 'https': proxies_ip}
+        r = requests.get(url, headers=header, proxies=proxies)
+        # r = requests.get(url, headers=header)
+        r.raise_for_status()
+        print(r.text)
 
 
 # ---------------------------
@@ -628,12 +681,13 @@ def menu():
         i = int(input("输入操作（0-6）："))
         if i < 0 or i > 6:
             print("操作有误，重新操作")
+            # Spider("", False, False).testProxy()
             return 1
         if i == 0:
             return 0
         if i == 6:
-            return menu2()  # 次级带单2
-        s = menu1()  # 次级菜单1
+            return sql_menu()  # 次级带单2
+        s = child_menu()  # 次级菜单1
         if s != 0:
             if i == 1:
                 s.foreach()  # 执行豆瓣电影TOP250榜遍历函数
@@ -655,7 +709,7 @@ def menu():
 
 
 # 二级菜单1 获取spider爬虫类对象
-def menu1():
+def child_menu():
     print("""------------------次---级---菜---单-----------------------
         1 不下载电影预告片，数据库不存储电影信息
         2 下载电影预告片，数据库存储电影信息
@@ -665,13 +719,13 @@ def menu1():
     try:
         i = int(input("输入操作（1-4）："))
         if i == 1:
-            return spider("", False, False)  # 返回一个spider类对象
+            return Spider("", False, False)  # 返回一个spider类对象
         elif i == 2:
-            return spider(input("输入预告片存储路径："), True, True)  # 返回一个spider类对象
+            return Spider(input("输入预告片存储路径："), True, True)  # 返回一个spider类对象
         elif i == 3:
-            return spider("", False, True)
+            return Spider("", False, True)
         elif i == 4:
-            return spider(input("输入预告片存储路径："), True, False)  # 返回一个spider类对象
+            return Spider(input("输入预告片存储路径："), True, False)  # 返回一个spider类对象
         else:
             print("操作有误，返回上一级")
             return 0
@@ -681,8 +735,8 @@ def menu1():
 
 
 # 二级菜单2  查询数据库电影信息
-def menu2():
-    m = mysql()
+def sql_menu():
+    m = MySql()
     print("""------------------次---级---菜---单-----------------------
         1 电影名查询
         2 类型查询
@@ -711,5 +765,6 @@ if __name__ == '__main__':
     while True:
         print()
         flag = menu()  #
-        if flag == 0: break
+        if flag == 0:
+            break
         sleep(3)
