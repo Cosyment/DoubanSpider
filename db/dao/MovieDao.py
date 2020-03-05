@@ -1,4 +1,3 @@
-import pymysql
 from db import DBHelper
 
 
