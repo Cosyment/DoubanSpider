@@ -123,11 +123,11 @@ if __name__ == "__main__":
     try:
         proxy = ProxySpider()
         threads = []
-        t1 = threading.Thread(target=proxy.testThread("线程1"))
+        t1 = threading.Thread(target=proxy.getProxyByXiCi())
         threads.append(t1)
         t2 = threading.Thread(target=proxy.getProxyByFreeIP())
         threads.append(t2)
-        t3 = threading.Thread(target=proxy.testThread("线程3"))
+        t3 = threading.Thread(target=proxy.getProxyBy89())
         threads.append(t3)
 
         for t in threads:
