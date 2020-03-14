@@ -10,7 +10,7 @@ def insert(title, cover, rating, year, director, writer, actors, type, release_d
     director = director.replace("\'", "\\'")
     actors = actors.replace("\'", "\\'")
     introduction = introduction.replace("\"", "\\\"").replace("\'", "\\'")
-    sql = "insert into t_movie(title, cover,rating,year, director, writer, actors, type, release_date, duration, introduction, trailer,hot) " \
+    sql = "insert into t_movie(title, cover,rating,year, director, writer, actors, type, release_date, duration, introduction, trailer,latest) " \
           "values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(title, cover, rating,
                                                                                              year,
                                                                                              director,
@@ -34,10 +34,10 @@ def insert(title, cover, rating, year, director, writer, actors, type, release_d
             db.commit()
             print("----------->>>>数据插入成功")
         else:
-            update_sql = "UPDATE t_movie t SET t.hot = 1 WHERE t.title =\'{}'".format(title)
+            update_sql = "UPDATE t_movie t SET t.latest = 1 WHERE t.title =\'{}'".format(title)
             cursor.execute(update_sql)
             db.commit()
-            print("----------->>>>更新热门电影信息 《{}》".format(title))
+            print("----------->>>>更新最新电影信息 《{}》".format(title))
     except Exception as ex:
         print(ex)
         # 如果发生错误则回滚

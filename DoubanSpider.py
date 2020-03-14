@@ -6,14 +6,15 @@ import json
 import Headers
 import ProxyValidator
 from enum import Enum
-from db.dao import CrawlRecordDao, HotMovieDao, BestMovieDao, MovieDao
+from db.dao import CrawlRecordDao, LatestMovieDao, HotMovieDao, BestMovieDao, MovieDao
 from selenium import webdriver
 
 
 class InsertType(Enum):
-    HOT_MOVIE = 0  # 最新热门电影
-    BEST_MOVIE = 1  # 豆瓣250榜单电影
-    ALL_MOVIE = 2  # 全部电影
+    LATEST_MOVIE = 0  # 最新电影
+    HOT_MOVIE = 1  # 热门电影
+    BEST_MOVIE = 2  # 豆瓣250榜单电影
+    ALL_MOVIE = 3  # 全部电影
 
 
 # ---------分 --割 --线 -------------------
@@ -109,7 +110,7 @@ class Spider:
                 url = a[i].get_attribute("href")
                 print()
                 self.random_delay("准备获取电影详情 {}")
-                self.getMovieDetail(0, url, 1)
+                self.getMovieDetail(url=url, insertType=InsertType.ALL_MOVIE)
                 if i == len(a) - 18:
                     self.random_delay("准备爬取下一页 {}")
                     # 页面滚动到底部，解决查看更多不可见时点击无效问题
@@ -177,7 +178,82 @@ class Spider:
                     if proxies_count == 0:
                         proxies_count = 1
                     for _ in range(proxies_count):  # 获取电影详情数据，失败重试3次
-                        flag = self.getMovieDetail(data['url'], InsertType.ALL_MOVIE)
+                        flag = self.getMovieDetail(title=name, url=data['url'], insertType=InsertType.ALL_MOVIE)
+                        if flag == 1:  # 详情页抓取成功
+                            break
+                        else:
+                            if proxies_count > 1:  # 服务器拒绝抓取失败时，重新更换ip抓取
+                                print()
+                                print("重新抓取详情数据")
+                            else:
+                                CrawlRecordDao.insert(i, start_page, name)
+                                break
+
+                    if flag == -1:
+                        CrawlRecordDao.insert(i, start_page, name)
+                        print("服务器拒绝，爬虫终止")
+                        is_reject = True
+                        break
+                    if i == size - 1:
+                        print()
+                        self.random_delay("准备爬取下一页 {}")
+                        page = int(count / self.pageSize)
+                        start_page = int(self.pageSize * page)
+                    count += 1
+        except Exception as ex:
+            print("爬取异常 {}".format(ex))
+            return 0
+
+    def getTagMoviesByApi(self, tag, insetType):
+        print()
+        print("开始爬取豆瓣{}电影".format(tag))
+        url = "https://movie.douban.com/j/search_subjects?type=movie&tag={}&page_limit=100&page_start={}"
+        header = dict()
+        start_page = 0  # 豆瓣api开始页
+        is_reject = False  # 服务器是否拒绝访问
+        header["user-agent"] = Headers.get_header()
+        try:
+            count = 1  # 当前已爬取总条数
+            # 查询是否有失败记录
+            record = CrawlRecordDao.query()
+            if record is not None:
+                start_page = record.page
+                count += start_page
+
+            while True:  # 爬取一页数据
+                if is_reject:
+                    break
+                print("----------------------加载第{}页,start_page {}----------------------".format(
+                    int(count / self.pageSize) + 1,
+                    start_page))
+                r = requests.get(url.format(tag, start_page), headers=header,
+                                 proxies={'http': self.random_proxies_ip()})
+                r.raise_for_status()
+                result = json.loads(r.content.decode('utf-8'))
+                # 判断结果是否包含data 数组
+                if 'subjects' in result:
+                    datas = result['subjects']
+                else:
+                    print("爬取异常中止 result {}".format(result))
+                    CrawlRecordDao.insert(0, start_page, '')
+                    break
+
+                if len(datas) == 0:
+                    print("加载完毕")
+                    break
+                size = len(datas)
+                for i in range(size):  # 爬取每页数据中的详情
+                    print()
+                    print("------------------------第{}条数据------------------------".format(count))
+                    data = datas[i]
+                    name = data['title']
+                    self.random_delay("准备获取《" + name + "》电影详情 {}")
+                    flag = 1
+                    proxies_count = len(self.proxies)  # 获取代理ip数量
+                    if proxies_count == 0:
+                        proxies_count = 1
+                    for _ in range(proxies_count):  # 获取电影详情数据，失败重试3次
+                        flag = self.getMovieDetail(url=data['url'], insertType=insetType)
                         if flag == 1:  # 详情页抓取成功
                             break
                         else:
@@ -217,7 +293,7 @@ class Spider:
             url = a.get_attribute('href')
             a.click()  # 点击连接
             # 获取电影详细信息
-            self.getMovieDetail(url, InsertType.HOT_MOVIE)
+            self.getMovieDetail(url=url, insertType=InsertType.HOT_MOVIE)
             drive.implicitly_wait(5)  # 等待5秒
         except Exception as ex:
             print(ex)
@@ -245,7 +321,7 @@ class Spider:
                 print()
                 print("第{}个".format(i + 1))
                 # 获取电影详细信息
-                self.getMovieDetail(l[i], 1)
+                self.getMovieDetail(url=l[i], insertType=InsertType.LATEST_MOVIE)
                 print()
         except Exception as ex:
             print(ex)
@@ -272,7 +348,7 @@ class Spider:
                 print()
                 print("第{}个".format(i + 1))
                 # 获取电影详细信息
-                self.getMovieDetail(l[i], InsertType.HOT_MOVIE)
+                self.getMovieDetail(url=l[i], insertType=InsertType.HOT_MOVIE)
                 print()
             drive.implicitly_wait(3)  # 等待3秒
         except Exception as ex:
@@ -280,7 +356,8 @@ class Spider:
             # drive.close()#关闭浏览器
 
     # 获取电影详细信息
-    def getMovieDetail(self, url, insertType):  # insert_flag 0 热门电影，1 豆瓣250电影，2 全部电影
+    def getMovieDetail(self, title=None, ranking=0, url=None,
+                       insertType=None):  # insert_flag 0 热门电影，1 豆瓣250电影，2 全部电影，3 最新电影
         print("豆瓣电影链接:{}".format(url))
         header = dict()
         # 获取请求头的user-agent字典，应付反爬处理
@@ -302,7 +379,10 @@ class Spider:
             xml = lxml.etree.HTML(r.text)  # 将网页源码转为xml 用lxml库进行解析
             # 获取电影名
             n = xml.xpath("//div[@id='content']/h1/span")  # 通过xpath获取网页标签
-            name = str(n[0].text)
+            if title is None:
+                name = str(n[0].text)
+            else:
+                name = title
             print("片名:{}".format(name))
             year = str(n[1].text).replace("(", "").replace(")", "")
             print("年份:{}".format(year))
@@ -380,11 +460,16 @@ class Spider:
                 print("该电影找不到预告片")
 
             if self.insert_enabled:
-                if insertType == InsertType.HOT_MOVIE:
-                    MovieDao.insert(name, cover, rating, year, director, writer, actors, type, release_date, duration,
-                                    text, trailer)
+                if insertType == InsertType.LATEST_MOVIE:
+                    LatestMovieDao.insert(name, cover, rating, year, director, writer, actors, type, release_date,
+                                          duration, text, trailer)
+                elif insertType == InsertType.HOT_MOVIE:
+                    HotMovieDao.insert(name, cover, rating, year, director, writer, actors, type, release_date,
+                                       duration,
+                                       text, trailer)
                 elif insertType == InsertType.BEST_MOVIE:
-                    BestMovieDao.insert(name, cover, rating, year, director, writer, actors, type, release_date,
+                    BestMovieDao.insert(ranking, name, cover, rating, year, director, writer, actors, type,
+                                        release_date,
                                         duration, text, trailer)
                 else:
                     MovieDao.insert(name, cover, rating, year, director, writer, actors, type, release_date, duration,
@@ -536,6 +621,7 @@ def menu():
         if i < 0 or i > 6:
             print("操作有误，重新操作")
             # Spider("", False, False).testProxy()
+            # BestMovieDao.insert(2, "test1", "test2", 9, 2001, "test3", "test4", "act", 'tet', "dfdf", "test5", "tst", "url")
             return 1
         if i == 0:
             return 0
@@ -549,9 +635,11 @@ def menu():
                 # s.getAllMoviesByHtml()
                 s.getAllMoviesByApi()
             elif i == 3:
-                s.getLatestReleases()  # 获取豆瓣最新上映电影
+                # s.getLatestReleases()  # 获取豆瓣最新上映电影
+                s.getTagMoviesByApi('最新', InsertType.LATEST_MOVIE)
             elif i == 4:
-                s.getHots()  # 获取豆瓣最近热门电影
+                # s.getHots()  # 获取豆瓣最近热门电影
+                s.getTagMoviesByApi('热门', InsertType.HOT_MOVIE)
             elif i == 5:
                 s.searchMovie(input("输入电影关键词："))  # 豆瓣搜索电影
         else:

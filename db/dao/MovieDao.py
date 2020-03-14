@@ -1,18 +1,18 @@
 from db import DBHelper
 
 
-def insert(name, cover, rating, year, director, writer, actors, type, release_date, duration,
+def insert(title, cover, rating, year, director, writer, actors, type, release_date, duration,
            introduction,
            trailer_url):
     db = DBHelper.Connector().get_connection()
     cursor = db.cursor()
-    name = name.replace("\'", "\\'")
+    title = title.replace("\'", "\\'")
     director = director.replace("\'", "\\'")
     actors = actors.replace("\'", "\\'")
     introduction = introduction.replace("\"", "\\\"").replace("\'", "\\'")
 
-    sql = "insert into movie(name, cover,rating,year, director, writer, actors, type, release_date, duration, introduction, trailer) " \
-          "values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(name, cover, rating,
+    sql = "insert into t_movie(title, cover,rating,year, director, writer, actors, type, release_date, duration, introduction, trailer) " \
+          "values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(title, cover, rating,
                                                                                         year,
                                                                                         director,
                                                                                         writer,
@@ -21,7 +21,7 @@ def insert(name, cover, rating, year, director, writer, actors, type, release_da
                                                                                         duration,
                                                                                         introduction,
                                                                                         trailer_url)
-    query_sql = "select name from movie where name='{}'".format(name)
+    query_sql = "select title from t_movie where title=\'{}'".format(title)
     try:
         # 执行sql语句
         cursor.execute(query_sql)
@@ -50,7 +50,7 @@ def searchByName(name):
     # 获取游标
     cursor = db.cursor()
     # SQL 查询语句
-    sql = "select * from movie where name like '%{}%'".format(name)
+    sql = "select * from t_movie where title like '%{}%'".format(name)
     try:
         cursor.execute(sql)
         result = cursor.fetchall()  # 获取查询内容
@@ -84,7 +84,7 @@ def searchByType(name):
     # 获取游标
     cursor = db.cursor()
     # SQL 查询语句
-    sql = "select * from movie where type like '%{}%'".format(name)
+    sql = "select * from t_movie where type like '%{}%'".format(name)
     try:
         cursor.execute(sql)
         result = cursor.fetchall()  # 获取查询内容

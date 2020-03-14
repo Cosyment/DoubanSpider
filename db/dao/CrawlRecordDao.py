@@ -5,7 +5,7 @@ from entities import Entity
 def insert(position, page, name):
     db = DBHelper.Connector().get_connection()
     cursor = db.cursor()
-    sql = "insert into crawl_record(position, page,name) VALUES ('{}','{}','{}')".format(position, page, name)
+    sql = "insert into t_crawl_record(position, page,name) VALUES ('{}','{}','{}')".format(position, page, name)
 
     try:
         cursor.execute(sql)
@@ -20,7 +20,7 @@ def query():
     db = DBHelper.Connector().get_connection()
     cursor = db.cursor()
     # 查询最后一条记录
-    sql = "select * from crawl_record order by crawl_id desc limit 1"
+    sql = "select * from t_crawl_record order by id desc limit 1"
     try:
         cursor.execute(sql)
         result = cursor.fetchone()
