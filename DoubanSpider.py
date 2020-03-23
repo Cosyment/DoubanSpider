@@ -38,7 +38,7 @@ class Spider:
     # 遍历页面
     def foreach(self):
         print()
-        print("豆瓣电影TOP250榜电影")
+        print("豆瓣电影TOP250榜单电影")
         i = 0
         while i < 10:
             # 遍历
@@ -65,14 +65,17 @@ class Spider:
             # 使用lxml将网页的源码转换成xml，然后使用xpath（）进行xml解析
             xml = lxml.etree.HTML(r.text)
             # 获取xml下类名为hd的div标签下的所有a标签的href属性  href装着电影链接url
-            a = xml.xpath("//div[@class='hd']/a/@href")
+            # a = xml.xpath("//div[@class='hd']/a/@href")
+            a = xml.xpath("//div[@class='hd']/a")
             i = 0
             count = page * 25 + 1
             while i < (len(a)):
                 print("TOP {}".format(count))
+                link = a[i].xpath("@href")[0]
+                title = a[i].xpath("span[@class='title']/text()")[0]
                 # 遍历当前页面的所有电影链接
                 self.random_delay("准备获取电影详情 {}")
-                flag = self.getMovieDetail(count, a[i], InsertType.BEST_MOVIE)
+                flag = self.getMovieDetail(title=title, ranking=count, url=link, insertType=InsertType.BEST_MOVIE)
                 sleep(3)  # 休息两秒 应付反爬
                 if flag == 1:
                     i += 1
@@ -362,11 +365,14 @@ class Spider:
         header = dict()
         # 获取请求头的user-agent字典，应付反爬处理
         header["user-agent"] = Headers.get_header()
+        alias = ''  # 别名
+        language = ''  # 语言
         director = ''  # 导演
         writer = ''  # 编剧
         actors = ''  # 主演
         type = ''  # 类型
         release_date = ''  # 上映日期
+        area = ''  # 地区
         duration = ''  # 时长
         IMDb = ''  # IMDb链接
         text = ''  # 简介
@@ -420,14 +426,36 @@ class Spider:
             for i in x4:
                 type += i.text + " "
             print("类型:{}".format(type))
+
+            # 获取电影地区
+            x5 = xml.xpath("//div[@id='info']/text()")
+            for i in range(len(x5)):
+                text = str(x5[i]).replace(" ", "")
+                if text is not '/' and self.isChinese(text):
+                    if area == '':
+                        area = text
+                        continue
+                    if language == '':
+                        language = text
+                        continue
+                    if alias == '':
+                        alias = text
+                        continue
+                    print(text)
+                else:
+                    pass
+            print("别名:{}".format(alias))
+            print("地区:{}".format(area))
+            print("语言:{}".format(language))
+
             # 获取电视上映日期
-            x5 = xml.xpath("//span[@property='v:initialReleaseDate']")
-            for i in x5:
+            x7 = xml.xpath("//span[@property='v:initialReleaseDate']")
+            for i in x7:
                 release_date += i.text + " "
             print("上映日期:{}".format(release_date))
             # 获取电影片长
-            x6 = xml.xpath("//span[@property='v:runtime']")
-            for i in x6:
+            x8 = xml.xpath("//span[@property='v:runtime']")
+            for i in x8:
                 duration += i.text + ' '
             print("片长:{}".format(duration))
             # 获取电影的IMDb链接
@@ -436,10 +464,10 @@ class Spider:
                 IMDb = div2[0]
             print("IMDb链接:{}".format(IMDb))
             # 获取电影简介
-            x7 = xml.xpath("//span[@property='v:summary']/text()")
-            for i in range(len(x7)):
-                text += "  " + x7[i].strip()
-                if i < len(x7) - 1:
+            x9 = xml.xpath("//span[@property='v:summary']/text()")
+            for i in range(len(x9)):
+                text += "  " + x9[i].strip()
+                if i < len(x9) - 1:
                     text += '\n'
             print("简介:\n{}".format(text))
             # 获取预告片链接
@@ -461,20 +489,26 @@ class Spider:
 
             if self.insert_enabled:
                 if insertType == InsertType.LATEST_MOVIE:
-                    LatestMovieDao.insert(name, cover, rating, year, director, writer, actors, type, release_date,
-                                          duration, text, trailer)
+                    LatestMovieDao.insert(name, alias, language, cover, rating, year, director, writer, actors, type,
+                                          release_date,
+                                          area, duration, text, trailer)
                 elif insertType == InsertType.HOT_MOVIE:
-                    HotMovieDao.insert(name, cover, rating, year, director, writer, actors, type, release_date,
-                                       duration,
+                    HotMovieDao.insert(name, alias, language, cover, rating, year, director, writer, actors, type,
+                                       release_date,
+                                       area, duration,
                                        text, trailer)
                 elif insertType == InsertType.BEST_MOVIE:
-                    BestMovieDao.insert(ranking, name, cover, rating, year, director, writer, actors, type,
-                                        release_date,
+                    BestMovieDao.insert(ranking, name, alias, language, cover, rating, year, director, writer, actors,
+                                        type,
+                                        release_date, area,
                                         duration, text, trailer)
                 else:
-                    MovieDao.insert(name, cover, rating, year, director, writer, actors, type, release_date, duration,
+                    MovieDao.insert(name, alias, language, cover, rating, year, director, writer, actors, type,
+                                    release_date,
+                                    area, duration,
                                     text, trailer)
                 return 1
+            return 1
         except Exception as ex:
             print("无法访问电影详细信息 {}".format(ex))
             if r.status_code == 403:
@@ -600,6 +634,18 @@ class Spider:
         # r = requests.get(url, headers=header)
         r.raise_for_status()
         print(r.text)
+
+    def isChinese(self, word):
+        for ch in word:
+            if '\u4e00' <= ch <= '\u9fff':
+                return True
+            return False
+
+    def check_contain_chinese(self, check_str):
+        for ch in check_str.decode('utf-8'):
+            if u'\u4e00' <= ch <= u'\u9fff':
+                return True
+            return False
 
 
 # ---------------------------

@@ -2,6 +2,8 @@ create table t_movie
 (
     id           bigint primary key not null auto_increment,
     title        varchar(100)       not null comment '片名',
+    alias        varchar(100) comment '别名',
+    language     varchar(10) comment '语言',
     cover        varchar(100) comment '封面图',
     rating       varchar(4) comment '评分',
     year         varchar(5) comment '年份',
@@ -10,6 +12,7 @@ create table t_movie
     actors       varchar(100) comment '主演',
     `type`       varchar(50) comment '类型',
     release_date varchar(100) comment '上映日期',
+    area         varchar(20) comment '地区',
     duration     varchar(20) comment '时长',
     introduction varchar(1000) comment '简介',
     trailer      varchar(100) comment '预告片',

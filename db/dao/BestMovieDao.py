@@ -1,7 +1,8 @@
 from db import DBHelper
 
 
-def insert(ranking, title, cover, rating, year, director, writer, actors, type, release_date, duration,
+def insert(ranking, title, alias, language, cover, rating, year, director, writer, actors, type, release_date, area,
+           duration,
            introduction,
            trailer_url):
     db = DBHelper.Connector().get_connection()
@@ -10,17 +11,23 @@ def insert(ranking, title, cover, rating, year, director, writer, actors, type, 
     director = director.replace("\'", "\\'")
     actors = actors.replace("\'", "\\'")
     introduction = introduction.replace("\"", "\\\"").replace("\'", "\\'")
-    sql = "insert into t_movie(title, cover,rating,year, director, writer, actors, type, release_date, duration, introduction, trailer,ranking) " \
-          "values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(title, cover, rating,
-                                                                                             year,
-                                                                                             director,
-                                                                                             writer,
-                                                                                             actors, type,
-                                                                                             release_date,
-                                                                                             duration,
-                                                                                             introduction,
-                                                                                             trailer_url,
-                                                                                             ranking)
+    sql = "insert into t_movie(title, alias,language,cover,rating,year, director, writer, actors, type, release_date, area,duration, introduction, trailer,ranking) " \
+          "values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(title,
+                                                                                                            alias,
+                                                                                                            language,
+                                                                                                            cover,
+                                                                                                            rating,
+                                                                                                            year,
+                                                                                                            director,
+                                                                                                            writer,
+                                                                                                            actors,
+                                                                                                            type,
+                                                                                                            release_date,
+                                                                                                            area,
+                                                                                                            duration,
+                                                                                                            introduction,
+                                                                                                            trailer_url,
+                                                                                                            ranking)
     query_sql = "select t.title from t_movie t where t.title=\'{}'".format(title)
     try:
         # 执行sql语句
@@ -34,7 +41,9 @@ def insert(ranking, title, cover, rating, year, director, writer, actors, type, 
             db.commit()
             print("----------->>>>数据插入成功")
         else:
-            update_sql = "UPDATE t_movie t SET t.ranking = \'{}' WHERE t.title =\'{}'".format(ranking, title)
+            # update_sql = "UPDATE t_movie t SET t.ranking = \'{}' WHERE t.title =\'{}'".format(ranking, title)
+            update_sql = "UPDATE t_movie t SET t.ranking = \'{}',t.alias=\'{}',t.area=\'{}',t.writer=\'{}',t.language=\'{}' WHERE t.title =\'{}'".format(
+                ranking, alias, area, writer, language, title)
             cursor.execute(update_sql)
             db.commit()
             print("----------->>>>更新经典电影信息 《{}》，豆瓣排名 {}".format(title, ranking))

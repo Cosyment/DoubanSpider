@@ -1,7 +1,7 @@
 from db import DBHelper
 
 
-def insert(title, cover, rating, year, director, writer, actors, type, release_date, duration,
+def insert(title, alias, language, cover, rating, year, director, writer, actors, type, release_date, area, duration,
            introduction,
            trailer_url):
     db = DBHelper.Connector().get_connection()
@@ -11,16 +11,19 @@ def insert(title, cover, rating, year, director, writer, actors, type, release_d
     actors = actors.replace("\'", "\\'")
     introduction = introduction.replace("\"", "\\\"").replace("\'", "\\'")
 
-    sql = "insert into t_movie(title, cover,rating,year, director, writer, actors, type, release_date, duration, introduction, trailer) " \
-          "values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(title, cover, rating,
-                                                                                        year,
-                                                                                        director,
-                                                                                        writer,
-                                                                                        actors, type,
-                                                                                        release_date,
-                                                                                        duration,
-                                                                                        introduction,
-                                                                                        trailer_url)
+    sql = "insert into t_movie(title,alias,language, cover,rating,year, director, writer, actors, type, release_date, area,duration, introduction, trailer) " \
+          "values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(title, alias,
+                                                                                                       language, cover,
+                                                                                                       rating,
+                                                                                                       year,
+                                                                                                       director,
+                                                                                                       writer,
+                                                                                                       actors, type,
+                                                                                                       release_date,
+                                                                                                       area,
+                                                                                                       duration,
+                                                                                                       introduction,
+                                                                                                       trailer_url)
     query_sql = "select title from t_movie where title=\'{}'".format(title)
     try:
         # 执行sql语句
