@@ -1,7 +1,9 @@
 from db import DBHelper
+import EnumUtil
 
 
-def insert(title, alias, language, cover, rating, year, director, writer, actors, type, release_date, area, duration,
+def insert(insert_type, ranking, title, alias, language, cover, rating, year, director, writer, actors, type,
+           release_date, area, duration,
            introduction,
            trailer_url):
     db = DBHelper.Connector().get_connection()
@@ -12,19 +14,27 @@ def insert(title, alias, language, cover, rating, year, director, writer, actors
     actors = actors.replace("\'", "\\'")
     introduction = introduction.replace("\"", "\\\"").replace("\'", "\\'")
 
-    sql = "insert into t_movie(title,alias,language, cover,rating,year, director, writer, actors, type, release_date, area,duration, introduction, trailer) " \
-          "values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(title, alias,
-                                                                                                       language, cover,
-                                                                                                       rating,
-                                                                                                       year,
-                                                                                                       director,
-                                                                                                       writer,
-                                                                                                       actors, type,
-                                                                                                       release_date,
-                                                                                                       area,
-                                                                                                       duration,
-                                                                                                       introduction,
-                                                                                                       trailer_url)
+    sql = "insert into t_movie(title,alias,language, cover,rating,year, director, writer, actors, type, release_date, area,duration, introduction, trailer,ranking,latest,hot) " \
+          "values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')".format(
+        title.strip(),
+        alias.strip(),
+        language.strip(),
+        cover.strip(),
+        rating,
+        year.strip(),
+        director.strip(),
+        writer.strip(),
+        actors.strip(),
+        type.strip(),
+        release_date.strip(),
+        area.strip(),
+        duration.strip(),
+        introduction.strip(),
+        trailer_url.strip(),
+        ranking,
+        1 if insert_type == EnumUtil.InsertType.LATEST else 0,
+        1 if insert_type == EnumUtil.InsertType.HOT else 0
+    )
     query_sql = "select title from t_movie where title=\'{}'".format(title)
     try:
         # 执行sql语句
@@ -38,7 +48,22 @@ def insert(title, alias, language, cover, rating, year, director, writer, actors
             db.commit()
             print("----------->>>>数据插入成功")
         else:
-            print("----------->>>>数据表中记录已存在")
+            if insert_type == EnumUtil.InsertType.ALL:
+                print("----------->>>>已存在该记录 《{}》".format(title))
+            else:
+                update_sql = None
+                if insert_type == EnumUtil.InsertType.LATEST:
+                    update_sql = "UPDATE t_movie t SET t.latest = 1 WHERE t.title =\'{}'".format(title)
+                    print("----------->>>>更新最新电影信息 《{}》".format(title))
+                elif insert_type == EnumUtil.InsertType.HOT:
+                    update_sql = "UPDATE t_movie t SET t.hot = 1 WHERE t.title =\'{}'".format(title)
+                    print("----------->>>>更新热门电影信息 《{}》".format(title))
+                elif insert_type == EnumUtil.InsertType.BEST:
+                    update_sql = "UPDATE t_movie t SET t.ranking = \'{}' WHERE t.title =\'{}'".format(ranking, title)
+                    print("----------->>>>更新最佳电影信息 《{}》".format(title))
+                if update_sql is not None:
+                    cursor.execute(update_sql)
+                    db.commit()
     except Exception as ex:
         print(ex)
         # 如果发生错误则回滚
