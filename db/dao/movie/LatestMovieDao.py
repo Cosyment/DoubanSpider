@@ -7,6 +7,7 @@ def insert(title, alias, language, cover, rating, year, director, writer, actors
     db = DBHelper.Connector().get_connection()
     cursor = db.cursor()
     title = title.replace("\'", "\\'")
+    alias = alias.replace("\'", "\\'")
     director = director.replace("\'", "\\'")
     actors = actors.replace("\'", "\\'")
     introduction = introduction.replace("\"", "\\\"").replace("\'", "\\'")
