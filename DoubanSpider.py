@@ -427,7 +427,7 @@ class Spider:
                 x8 = xml.xpath("//span[@property='v:runtime']")
                 for i in x8:
                     duration += i.text + ' '
-            print("单集片长:{}".format(duration))
+            print("片长:{}".format(duration))
             # 获取IMDb链接
             div2 = xml.xpath("//div[@id='info']/a/@href")
             if len(div2) != 0:
