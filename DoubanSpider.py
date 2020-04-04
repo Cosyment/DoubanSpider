@@ -422,7 +422,7 @@ class Spider:
             for i in x7:
                 release_date += i.text + " "
             print("上映日期:{}".format(release_date))
-            # 获取单集片长
+            # 获取片长 （电视剧、动漫为单集时长）
             if duration == '':
                 x8 = xml.xpath("//span[@property='v:runtime']")
                 for i in x8:
