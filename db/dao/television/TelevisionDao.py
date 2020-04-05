@@ -19,7 +19,6 @@ def insert(insert_type, title,  # 电视剧名称
            introduction,  # 简介
            trailer_url,  # 预告片
            ):
-    print("insert_type {} {},{}".format(insert_type, EnumUtil.InsertType.LATEST, EnumUtil.InsertType.HOT))
     db = DBHelper.Connector().get_connection()
     cursor = db.cursor()
     title = title.replace("\'", "\\'")
@@ -66,10 +65,14 @@ def insert(insert_type, title,  # 电视剧名称
             else:
                 update_sql = None
                 if insert_type == EnumUtil.InsertType.LATEST:
-                    update_sql = "UPDATE t_television t SET t.latest = 1 WHERE t.title =\'{}'".format(title)
+                    # update_sql = "UPDATE t_television t SET t.latest = 1 WHERE t.title =\'{}'".format(title)
+                    update_sql = "UPDATE t_television t SET t.alias=\'{}', t.area=\'{}',t.language=\'{}',t.director=\'{}',t.writer=\'{}', t.actors=\'{}', t.latest = 1 WHERE t.title =\'{}'".format(
+                        alias, area, language, director, writer, actors, title)
                     print("----------->>>>更新最新电视剧信息 《{}》".format(title))
                 elif insert_type == EnumUtil.InsertType.HOT:
-                    update_sql = "UPDATE t_television t SET t.hot = 1 WHERE t.title =\'{}'".format(title)
+                    # update_sql = "UPDATE t_television t SET t.hot = 1 WHERE t.title =\'{}'".format(title)
+                    update_sql = "UPDATE t_television t SET t.alias=\'{}', t.area=\'{}',t.language=\'{}',t.director=\'{}',t.writer=\'{}', t.actors=\'{}',t.hot = 1 WHERE t.title =\'{}'".format(
+                        alias, area, language, director, writer, actors, title)
                     print("----------->>>>更新热门电视剧信息 《{}》".format(title))
                 if update_sql is not None:
                     cursor.execute(update_sql)

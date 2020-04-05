@@ -53,14 +53,22 @@ def insert(insert_type, ranking, title, alias, language, cover, rating, year, di
             else:
                 update_sql = None
                 if insert_type == EnumUtil.InsertType.LATEST:
-                    update_sql = "UPDATE t_movie t SET t.latest = 1 WHERE t.title =\'{}'".format(title)
+                    # update_sql = "UPDATE t_movie t SET t.latest = 1 WHERE t.title =\'{}'".format(title)
+                    update_sql = "UPDATE t_movie t SET t.alias=\'{}', t.area=\'{}',t.language=\'{}',t.director=\'{}',t.writer=\'{}', t.actors=\'{}', t.latest = 1 WHERE t.title =\'{}'".format(
+                        alias, area, language, director, writer, actors, title)
                     print("----------->>>>更新最新电影信息 《{}》".format(title))
                 elif insert_type == EnumUtil.InsertType.HOT:
-                    update_sql = "UPDATE t_movie t SET t.hot = 1 WHERE t.title =\'{}'".format(title)
+                    # update_sql = "UPDATE t_movie t SET t.hot = 1 WHERE t.title =\'{}'".format(title)
+                    update_sql = "UPDATE t_movie t SET t.alias=\'{}', t.area=\'{}',t.language=\'{}',t.director=\'{}',t.writer=\'{}', t.actors=\'{}', t.hot = 1 WHERE t.title =\'{}'".format(
+                        alias, area, language, director, writer, actors, title)
                     print("----------->>>>更新热门电影信息 《{}》".format(title))
                 elif insert_type == EnumUtil.InsertType.BEST:
-                    update_sql = "UPDATE t_movie t SET t.ranking = \'{}' WHERE t.title =\'{}'".format(ranking, title)
+                    # update_sql = "UPDATE t_movie t SET  t.ranking = \'{}' WHERE t.title =\'{}'".format(ranking, title)
+                    update_sql = "UPDATE t_movie t SET t.alias=\'{}', t.area=\'{}',t.language=\'{}',t.director=\'{}',t.writer=\'{}', t.actors=\'{}', t.ranking = \'{}' WHERE t.title =\'{}'".format(
+                        alias, area, language, director, writer, actors,
+                        ranking, title)
                     print("----------->>>>更新最佳电影信息 《{}》".format(title))
+
                 if update_sql is not None:
                     cursor.execute(update_sql)
                     db.commit()

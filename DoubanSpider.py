@@ -354,21 +354,21 @@ class Spider:
             directorList = info.xpath(u'//span[contains(./text(), "导演")]/following-sibling::span[1]/a/text()')
             if len(directorList) > 0:
                 for i in range(len(directorList)):
-                    if i > 3:  # 只保存前三个导演
+                    if i >= 3:  # 只保存前三个导演
                         break
                     else:
                         director += directorList[i] + " "
             writerList = info.xpath(u'//span[contains(./text(), "编剧")]/following-sibling::span[1]/a/text()')
             if len(writerList) > 0:
                 for i in range(len(writerList)):
-                    if i > 3:  # 只保存前三个编剧
+                    if i >= 3:  # 只保存前三个编剧
                         break
                     else:
                         writer += writerList[i] + " "
             actorList = info.xpath(u'//span[contains(./text(), "主演")]/following-sibling::span[1]/a/text()')
             if len(actorList) > 0:
                 for i in range(len(actorList)):
-                    if i > 5:  # 只保存前五个主演
+                    if i >= 5:  # 只保存前五个主演
                         break
                     else:
                         actors += actorList[i] + " "
